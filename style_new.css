@@ -1,5 +1,12 @@
 /* W3.CSS 4.12 November 2018 by Jan Egil and Borge Refsnes */
 html{box-sizing:border-box}*,*:before,*:after{box-sizing:inherit}
+
+/* ADDED CODE HERE */
+
+.w3-vertbar{height:100px;width:100%;background-color:#fff;z-index:1;overflow:auto}
+
+.w3-upload-border{border: 1px solid #c3c3c3;width: 75%;height: 350px;}
+
 /* Extract from normalize.css by Nicolas Gallagher and Jonathan Neal git.io/normalize */
 html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}
 article,aside,details,figcaption,figure,footer,header,main,menu,nav,section,summary{display:block}
