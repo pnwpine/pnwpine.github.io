@@ -73,13 +73,13 @@ function initializeCaptcha(id) {
 	});
 }
 
-function serverActionCallback(serverStatus) {
+function serverActionCallback(id, serverStatus) {
 	switch(serverStatus) {
 		case SERVER_STATUS_CODE.running:
-			alert('Stopping server (test message)');
+			alert(`Would stop server if coded (${id})`);
 			break;
 		case SERVER_STATUS_CODE.stopped:
-			alert('Starting server (test message)');
+			alert(`Would start server if coded (${id})`);
 			break;
 		default:
 			break;
@@ -120,7 +120,7 @@ function getTableHTML(data) {
 		
 		const td4 = document.createElement('td');
 		td4.style.width = '45%'
-		const callback = () => serverActionCallback(serverDetails.Status.Code);
+		const callback = () => serverActionCallback(serverDetails.ID, serverDetails.Status.Code);
 		if (serverDetails.Status.Code === SERVER_STATUS_CODE.running) {
 			td4.appendChild(getButtonHTML(serverDetails.ID, serverDetails.Status.Code, 'danger', 'Stop Server', callback));
 		} else if (serverDetails.Status.Code === SERVER_STATUS_CODE.stopped) {
@@ -129,7 +129,6 @@ function getTableHTML(data) {
 			td4.appendChild(getButtonHTML(serverDetails.ID, serverDetails.Status.Code, 'secondary', 'Unknown State', callback));	
 		}
 		td4.appendChild(createCaptchaPlaceholder(serverDetails.ID));	
-		
 		
 		[td, td2, td3, td4].forEach(child => {
 			child.classList.add('align-middle');
@@ -158,6 +157,11 @@ function onLoad() {
 	getStatus();
 	document.getElementById("refresh-timer").innerText = `Automatic Refresh in ${timer} seconds...`;
 	setInterval(startAutomaticUpdates, 1000);
+}
+
+function manualRefresh() {
+	resetPage();
+	getStatus();
 }
 
 function resetPage() {
