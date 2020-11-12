@@ -2,7 +2,6 @@ const mockData = false;
 const failFetch = false;
 let debuggingInfoShown = false;
 const captchaSiteKey = '6Ld-k-EZAAAAAIVRIKVXXs2aO4S5rlrCZ9_wdAGA';
-// let captchaComplete = false;
 const SERVER_STATUS_CODE = {
 	running: 16,
 	stopped: 80
