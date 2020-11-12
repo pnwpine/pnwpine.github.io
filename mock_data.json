@@ -1,0 +1,42 @@
+[
+    {
+        "ID": "i-04c24e2e2d17949a3",
+        "IP": "52.32.155.30",
+        "Status": {
+            "Code": 16,
+            "Name": "running"
+        },
+        "Tags": [
+            {
+                "Key": "Name",
+                "Value": "MC Server"
+            },
+            {
+                "Key": "game_server",
+                "Value": "true"
+            }
+        ]
+    },
+    {
+        "ID": "i-00121da425ddbd200",
+        "IP": null,
+        "Status": {
+            "Code": 80,
+            "Name": "stopped"
+        },
+        "Tags": [
+            {
+                "Key": "Name",
+                "Value": "STOP"
+            },
+            {
+                "Key": "game_server",
+                "Value": "true"
+            },
+            {
+                "Key": "name",
+                "Value": "STOP"
+            }
+        ]
+    }
+]
