@@ -9,17 +9,9 @@ const SERVER_STATUS_CODE = {
 const defaultTimerValue = 180;
 let timer = defaultTimerValue;
 
-function completeCaptcha(id) {
-	disableButtons(id, false);
-}
-
-function expireCaptcha(id) {
-	disableButtons(id, true);
-}
-
-function disableButtons(id, disable) {
+function captchaStateChange(id, disableButton) {
 	const buttons = document.querySelectorAll(`[id*="${id}"]`);
-	buttons.forEach(button1 => button1.disabled = disable);
+	buttons.forEach(button1 => button1.disabled = disableButton);
 }
 
 function getCheckMarkHTML(width, height, color) {
@@ -67,8 +59,8 @@ function createCaptchaPlaceholder(serverId) {
 function initializeCaptcha(id) {
 	grecaptcha.render(id, {
 	  'sitekey' : captchaSiteKey,
-	  'callback': (responseToken) => completeCaptcha(id),
-	  'expired-callback': () => expireCaptcha(id)
+	  'callback': (responseToken) => captchaStateChange(id, false),
+	  'expired-callback': () => captchaStateChange(id, true)
 	});
 }
 
@@ -122,12 +114,12 @@ function getTableHTML(data) {
 		const callback = () => serverActionCallback(serverDetails.ID, serverDetails.Status.Code);
 		if (serverDetails.Status.Code === SERVER_STATUS_CODE.running) {
 			td4.appendChild(getButtonHTML(serverDetails.ID, serverDetails.Status.Code, 'danger', 'Stop Server', callback));
+			td4.appendChild(createCaptchaPlaceholder(serverDetails.ID));
 		} else if (serverDetails.Status.Code === SERVER_STATUS_CODE.stopped) {
 			td4.appendChild(getButtonHTML(serverDetails.ID, serverDetails.Status.Code, 'success', 'Start Server', callback));
-		} else {
-			td4.appendChild(getButtonHTML(serverDetails.ID, serverDetails.Status.Code, 'secondary', 'Unknown State', callback));	
+			td4.appendChild(createCaptchaPlaceholder(serverDetails.ID));
 		}
-		td4.appendChild(createCaptchaPlaceholder(serverDetails.ID));	
+			
 		
 		[td, td2, td3, td4].forEach(child => {
 			child.classList.add('align-middle');
