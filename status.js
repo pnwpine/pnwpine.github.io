@@ -8,10 +8,10 @@ const SERVER_STATUS_CODE = {
 }
 const defaultTimerValue = 180;
 let timer = defaultTimerValue;
+const captchaMap = new Map();
 
-function captchaStateChange(id, disableButton) {
-	const buttons = document.querySelectorAll(`[id*="${id}"]`);
-	buttons.forEach(button1 => button1.disabled = disableButton);
+function captchaStateChange(serverId, disableButton) {
+	captchaMap[serverId].button.disabled = disableButton;
 }
 
 function getCheckMarkHTML(width, height, color) {
@@ -56,25 +56,40 @@ function createCaptchaPlaceholder(serverId) {
 	return captchaElement;
 }
 
-function initializeCaptcha(id) {
-	grecaptcha.render(id, {
+function initializeCaptcha(serverId) {
+	captchaMap[serverId].captcha = grecaptcha.render(serverId, {
 	  'sitekey' : captchaSiteKey,
-	  'callback': (responseToken) => captchaStateChange(id, false),
-	  'expired-callback': () => captchaStateChange(id, true)
+	  'callback': (responseToken) => captchaStateChange(serverId, false),
+	  'expired-callback': () => captchaStateChange(serverId, true)
 	});
 }
 
-function serverActionCallback(id, serverStatus) {
-	switch(serverStatus) {
+function serverActionCallback(serverId, serverStatus) {
+	const captchaResponse = grecaptcha.getResponse(captchaMap[serverId].captcha);
+	
+	fetch('myawsendpoint', {
+		method: 'POST',
+		body: JSON.stringify({
+			captchaResponse: captchaResponse
+		})
+	})
+	.then(data => data.json())
+	.then(data => {
+		console.log(data);
+		switch(serverStatus) {
 		case SERVER_STATUS_CODE.running:
-			alert(`Would stop server if coded (${id})`);
+			alert(`Would stop server if coded (${serverId})`);
 			break;
 		case SERVER_STATUS_CODE.stopped:
-			alert(`Would start server if coded (${id})`);
+			alert(`Would start server if coded (${serverId})`);
 			break;
 		default:
 			break;
-	}
+		}
+	}).catch(error => {
+		console.log(error);
+	});
+	
 }
 
 function getTableHTML(data) {
@@ -111,15 +126,18 @@ function getTableHTML(data) {
 		
 		const td4 = document.createElement('td');
 		td4.style.width = '45%'
-		const callback = () => serverActionCallback(serverDetails.ID, serverDetails.Status.Code);
-		if (serverDetails.Status.Code === SERVER_STATUS_CODE.running) {
-			td4.appendChild(getButtonHTML(serverDetails.ID, serverDetails.Status.Code, 'danger', 'Stop Server', callback));
-			td4.appendChild(createCaptchaPlaceholder(serverDetails.ID));
-		} else if (serverDetails.Status.Code === SERVER_STATUS_CODE.stopped) {
-			td4.appendChild(getButtonHTML(serverDetails.ID, serverDetails.Status.Code, 'success', 'Start Server', callback));
-			td4.appendChild(createCaptchaPlaceholder(serverDetails.ID));
-		}
+		
+		if (serverDetails.Status.Code === SERVER_STATUS_CODE.running || serverDetails.Status.Code === SERVER_STATUS_CODE.stopped) {
+			const callback = () => serverActionCallback(serverDetails.ID, serverDetails.Status.Code);
+			const color = serverDetails.Status.Code === SERVER_STATUS_CODE.running ? 'danger' : serverDetails.Status.Code === SERVER_STATUS_CODE.stopped ? 'success' : 'secondary';
+			const buttonText = serverDetails.Status.Code === SERVER_STATUS_CODE.running ? 'Stop Server' : serverDetails.Status.Code === SERVER_STATUS_CODE.stopped ? 'Start Server' : 'Error';
 			
+			const actionButton = getButtonHTML(serverDetails.ID, serverDetails.Status.Code, color, buttonText, callback);
+			td4.appendChild(actionButton);
+			td4.appendChild(createCaptchaPlaceholder(serverDetails.ID));
+			
+			captchaMap[serverDetails.ID] = {button: actionButton, captcha: null}
+		}
 		
 		[td, td2, td3, td4].forEach(child => {
 			child.classList.add('align-middle');
@@ -138,8 +156,7 @@ function startAutomaticUpdates() {
 	timer = timer - 1;
 	document.getElementById("refresh-timer").innerText = `Automatic Refresh in ${timer} seconds...`;
 	if (timer === 0) {
-		resetPage();
-		getStatus();
+		refresh();
 		timer = defaultTimerValue;
 	}
 }
@@ -150,7 +167,7 @@ function onLoad() {
 	setInterval(startAutomaticUpdates, 1000);
 }
 
-function manualRefresh() {
+function refresh() {
 	resetPage();
 	getStatus();
 }
@@ -165,22 +182,22 @@ function resetPage() {
 function getStatus() {
 	const serverPromise = failFetch ? fetch('deadfile') : mockData ? fetch('mock_data.json') : fetch('https://4kdsuad7ug.execute-api.us-west-2.amazonaws.com/Dev')
 	serverPromise
-		.then(data => data.json())
-		.then(data => {
-			document.getElementById("debug-spinner").style.display = 'none';
-			document.getElementById("main-spinner").style.display = 'none';
-			document.getElementById("table-container").appendChild(getTableHTML(data));
-			
-			// Placeholders have to be in the DOM before we can initialize the captchas
-			data.forEach(serverDetails => initializeCaptcha(serverDetails.ID));
-			document.getElementById("raw-json").innerText = JSON.stringify(data);
-		}).catch(error => {
-			console.log(error);
-			document.getElementById("debug-spinner").style.display = 'none';
-			document.getElementById("main-spinner").style.display = 'none';
-			document.getElementById("table-container").innerHTML = '<h4 class="text-danger">An error has occurred.</h4>';
-			document.getElementById("raw-json").innerText = 'An error has occurred.';
-		});
+	.then(data => data.json())
+	.then(data => {
+		document.getElementById("debug-spinner").style.display = 'none';
+		document.getElementById("main-spinner").style.display = 'none';
+		document.getElementById("table-container").appendChild(getTableHTML(data));
+		
+		// Placeholders have to be in the DOM before we can initialize the captchas
+		data.forEach(serverDetails => initializeCaptcha(serverDetails.ID));
+		document.getElementById("raw-json").innerText = JSON.stringify(data);
+	}).catch(error => {
+		console.log(error);
+		document.getElementById("debug-spinner").style.display = 'none';
+		document.getElementById("main-spinner").style.display = 'none';
+		document.getElementById("table-container").innerHTML = '<h4 class="text-danger">An error has occurred.</h4>';
+		document.getElementById("raw-json").innerText = 'An error has occurred.';
+	});
 }
 
 function onToggleDebuggingInformation() {
